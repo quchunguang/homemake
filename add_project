@@ -1,5 +1,6 @@
 #!/bin/bash
-
+# Usage:
+#     add_project <project_name>
 cd ~/test/testarduino
 
 awk -v prj="${1}" '
@@ -7,7 +8,7 @@ awk -v prj="${1}" '
 /b7b86095-2263-46c8-a9c6-52e52760265c/{print "\tcd",prj,"&& $(MAKE) clean"}1' \
 Makefile >Makefile.tmp
 
-mv Makefile /tmp/Makefile.bak
+mv Makefile Makefile.bak
 mv Makefile.tmp Makefile
 
 mkdir ${1}
