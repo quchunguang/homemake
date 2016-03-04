@@ -22,3 +22,6 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+Makefile.bak
+sftp-config.json
