@@ -2,7 +2,7 @@ package main
 
 import (
 	"bufio"
-	"github.com/tarm/goserial"
+	"github.com/tarm/serial"
 	"log"
 )
 
