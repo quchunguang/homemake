@@ -49,6 +49,7 @@ all:
 	cd filtering09 && $(MAKE)
 	cd filtering10 && $(MAKE)
 	cd filtering11 && $(MAKE)
+	cd ds18b20 && $(MAKE)
 	## 5f2d225e-a770-4c12-b2b3-c230d5818085
 clean:
 	cd halleffect && $(MAKE) clean
@@ -99,4 +100,5 @@ clean:
 	cd filtering09 && $(MAKE) clean
 	cd filtering10 && $(MAKE) clean
 	cd filtering11 && $(MAKE) clean
+	cd ds18b20 && $(MAKE) clean
 	## b7b86095-2263-46c8-a9c6-52e52760265c

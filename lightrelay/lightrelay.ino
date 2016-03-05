@@ -1,34 +1,48 @@
 // Function
 //      Control LEDs and 2-way relay with Light sensor
+// Library
+//      https://github.com/PaulStoffregen/OneWire
+//      https://github.com/milesburton/Arduino-Temperature-Control-Library
 // Reference
 //      http://www.geek-workshop.com/thread-1340-1-1.html
+//      http://www.instructables.com/id/DS18B20-temperature-probe-with-LCD/?ALLSTEPS
 // Connection
-//      Light sensor: Gnd->10KOhm->LS->5V;
+//      Light Sensor: Gnd->10KOhm->LS->5V;
 //                               |->A0.
+//      Temperature Sensor - DS18B20: Vcc->5V(Arduino);
+//                                    Gnd->Gnd(Arduino);
+//                                    Data->4.7KOhm->5V(Arduino);
+//                                        |->D7.
 //      LED: Gnd->330Ohm->pinLedL->D2;
-//           Gnd->330Ohm->pinLedM->D2;
-//           Gnd->330Ohm->pinLedH->D2.
-//      Relay module->Arduino: Gnd->Gnd; In1->D5; In2->D6; Vcc->5V.
+//           Gnd->330Ohm->pinLedM->D3;
+//           Gnd->330Ohm->pinLedH->D4.
+//      Relay module->Arduino: Gnd->Gnd(Arduino); In1->D5; In2->D6; Vcc->5V.
 //      Relay module->Power switcher: NO1->AC PowerA1; NO2->AC PowerA2.
 //      Relay module->Power switcher: COM1->COM2->AC PowerB.
 // Tested
 //      arduino uno/nano328
+#include <OneWire.h>
+#include <DallasTemperature.h>
 
-int sensorValue;
-int baudrate = 9600;
+#define BAUDRATE 9600
 
-int pinLedL = 2;
-int pinLedM = 3;
-int pinLedH = 4;
-int pinRelay1 = 5;  // HIGH ON
-int pinRelay2 = 6;  // HIGH OFF
-int pinReadLight = A0;
+#define pinLedL 2
+#define pinLedM 3
+#define pinLedH 4
+#define pinRelay1 5  // HIGH ON
+#define pinRelay2 6  // HIGH OFF
+#define pinDS18B20 7 // one wire bus
+#define pinReadLight A0
 
-bool R1OnR2Off = false;
+int Relay1 = LOW;
+int Relay2 = LOW;
+
+OneWire oneWire(pinDS18B20);
+DallasTemperature sensors(&oneWire);
 
 void setup()
 {
-    Serial.begin(baudrate);
+    Serial.begin(BAUDRATE);
 
     pinMode(pinLedL, OUTPUT);
     pinMode(pinLedM, OUTPUT);
@@ -39,32 +53,41 @@ void setup()
     digitalWrite(pinLedL, LOW);
     digitalWrite(pinLedM, LOW);
     digitalWrite(pinLedH, LOW);
-    digitalWrite(pinRelay1, LOW);
-    digitalWrite(pinRelay2, LOW);
+    digitalWrite(pinRelay1, Relay1);
+    digitalWrite(pinRelay2, Relay2);
+
+    // Start up the library
+    sensors.begin();
 }
 
 void loop()
 {
-    sensorValue = analogRead(pinReadLight);
+    lightValue = analogRead(pinReadLight);
+    Serial.print(lightValue);
 
-    Serial.println(sensorValue);
+    // Send the command to get temperatures
+    sensors.requestTemperatures();
+    // Why "byIndex"?
+    // You can have more than one IC on the same bus.
+    // 0 refers to the first IC on the wire
+    temperature = sensors.getTempCByIndex(0);
+    Serial.println(temperature);
 
-    if (sensorValue > 950) {
+    if (lightValue > 950) {
         digitalWrite(pinLedL, HIGH);
         digitalWrite(pinLedM, HIGH);
         digitalWrite(pinLedH, HIGH);
 
-        if (!R1OnR2Off) {
-            digitalWrite(pinRelay1, HIGH);
-            digitalWrite(pinRelay2, LOW);
-            R1OnR2Off = true;
-            Serial.println("[X] Relay 1 On, Relay 2 Off");
+        if (Relay2 == HIGH) {
+            Relay2 = LOW;
+            digitalWrite(pinRelay2, Relay2);
+            Serial.println("[X] Relay 2 Off");
         }
-    } else if (sensorValue > 800) {
+    } else if (lightValue > 800) {
         digitalWrite(pinLedL, HIGH);
         digitalWrite(pinLedM, HIGH);
         digitalWrite(pinLedH, LOW);
-    } else if (sensorValue > 700) {
+    } else if (lightValue > 700) {
         digitalWrite(pinLedL, HIGH);
         digitalWrite(pinLedM, LOW);
         digitalWrite(pinLedH, LOW);
@@ -73,11 +96,10 @@ void loop()
         digitalWrite(pinLedM, LOW);
         digitalWrite(pinLedH, LOW);
 
-        if (R1OnR2Off) {
-            digitalWrite(pinRelay1, LOW);
-            digitalWrite(pinRelay2, HIGH);
-            R1OnR2Off = false;
-            Serial.println("[X] Relay 1 Off, Relay 2 On");
+        if (Relay2 == LOW) {
+            Relay2 = HIGH;
+            digitalWrite(pinRelay2, Relay2);
+            Serial.println("[X] Relay 2 On");
         }
     }
 
