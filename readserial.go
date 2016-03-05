@@ -2,31 +2,24 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"github.com/tarm/goserial"
-	// "time"
+	"log"
 )
 
 func main() {
 	c := &serial.Config{Name: "COM4", Baud: 9600}
 	s, err := serial.OpenPort(c)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
-	// _, err = s.Write([]byte("\x16\x02N0C0 G A\x03\x0d\x0a"))
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// time.Sleep(time.Second / 2)
-
 	reader := bufio.NewReader(s)
-	for i := 1; i < 1000; i++ {
+	for {
 		reply, err := reader.ReadBytes('\x0a')
 		if err != nil {
 			panic(err)
 		}
-		fmt.Print(string(reply))
+		log.Print(string(reply))
 	}
 
 	s.Close()
