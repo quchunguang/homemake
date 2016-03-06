@@ -83,7 +83,6 @@ body {
         y.domain(d3.extent(data, function(d) {
             return d.temp;
         }));
-        console.log(data);
         svg.append("g")
             .attr("class", "x axis")
             .attr("transform", "translate(0," + height + ")")
