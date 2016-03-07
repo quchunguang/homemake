@@ -36,9 +36,17 @@
 
 int Relay1 = LOW;
 int Relay2 = LOW;
+int lightValue = 0;
+float temperature = 0.0;
 
 OneWire oneWire(pinDS18B20);
 DallasTemperature sensors(&oneWire);
+
+void ctrlLed(int l, int m, int h) {
+    digitalWrite(pinLedL, l);
+    digitalWrite(pinLedM, m);
+    digitalWrite(pinLedH, h);
+}
 
 void setup()
 {
@@ -50,9 +58,7 @@ void setup()
     pinMode(pinRelay1, OUTPUT);
     pinMode(pinRelay2, OUTPUT);
 
-    digitalWrite(pinLedL, LOW);
-    digitalWrite(pinLedM, LOW);
-    digitalWrite(pinLedH, LOW);
+    ctrlLed(LOW, LOW, LOW);
     digitalWrite(pinRelay1, Relay1);
     digitalWrite(pinRelay2, Relay2);
 
@@ -62,44 +68,35 @@ void setup()
 
 void loop()
 {
-    lightValue = analogRead(pinReadLight);
-    Serial.print(lightValue);
-
     // Send the command to get temperatures
     sensors.requestTemperatures();
     // Why "byIndex"?
     // You can have more than one IC on the same bus.
     // 0 refers to the first IC on the wire
     temperature = sensors.getTempCByIndex(0);
-    Serial.println(temperature);
+    lightValue = analogRead(pinReadLight);
+
+    Serial.print(temperature, lightValue);
 
     if (lightValue > 950) {
-        digitalWrite(pinLedL, HIGH);
-        digitalWrite(pinLedM, HIGH);
-        digitalWrite(pinLedH, HIGH);
+        ctrlLed(HIGH, HIGH, HIGH);
 
         if (Relay2 == HIGH) {
             Relay2 = LOW;
             digitalWrite(pinRelay2, Relay2);
-            Serial.println("[X] Relay 2 Off");
+//            Serial.println("[X] Relay 2 Off");
         }
     } else if (lightValue > 800) {
-        digitalWrite(pinLedL, HIGH);
-        digitalWrite(pinLedM, HIGH);
-        digitalWrite(pinLedH, LOW);
+        ctrlLed(HIGH, HIGH, LOW);
     } else if (lightValue > 700) {
-        digitalWrite(pinLedL, HIGH);
-        digitalWrite(pinLedM, LOW);
-        digitalWrite(pinLedH, LOW);
+        ctrlLed(HIGH, LOW, LOW);
     } else {
-        digitalWrite(pinLedL, LOW);
-        digitalWrite(pinLedM, LOW);
-        digitalWrite(pinLedH, LOW);
+        ctrlLed(LOW, LOW, LOW);
 
         if (Relay2 == LOW) {
             Relay2 = HIGH;
             digitalWrite(pinRelay2, Relay2);
-            Serial.println("[X] Relay 2 On");
+//            Serial.println("[X] Relay 2 On");
         }
     }
 
