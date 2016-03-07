@@ -1,8 +1,10 @@
 // Function
 //      Control LEDs and 2-way relay with Light sensor
 // Library
-//      https://github.com/PaulStoffregen/OneWire
-//      https://github.com/milesburton/Arduino-Temperature-Control-Library
+//      cd /usr/share/arduino/libraries/
+//      git clone https://github.com/PaulStoffregen/OneWire
+//      git clone https://github.com/milesburton/Arduino-Temperature-Control-Library DallasTemperature
+//
 // Reference
 //      http://www.geek-workshop.com/thread-1340-1-1.html
 //      http://www.instructables.com/id/DS18B20-temperature-probe-with-LCD/?ALLSTEPS
@@ -76,7 +78,9 @@ void loop()
     temperature = sensors.getTempCByIndex(0);
     lightValue = analogRead(pinReadLight);
 
-    Serial.print(temperature, lightValue);
+    Serial.print(temperature);
+    Serial.write(' ');
+    Serial.println(lightValue);
 
     if (lightValue > 950) {
         ctrlLed(HIGH, HIGH, HIGH);
