@@ -47,6 +47,7 @@ DallasTemperature sensors(&oneWire);
 void setup()
 {
     Serial.begin(BAUDRATE);
+    Serial.println("[INFO] Init");
 
     pinMode(pinLedR, OUTPUT);
     pinMode(pinLedG, OUTPUT);
@@ -60,6 +61,8 @@ void setup()
 
     digitalWrite(pinRelay1, Relay1);
     digitalWrite(pinRelay2, Relay2);
+    Serial.println("[INFO] Relay 1 Off");
+    Serial.println("[INFO] Relay 2 Off");
 
     // Start up the library
     sensors.begin();
@@ -75,15 +78,15 @@ void loop()
     // Control relay-1 with light sensor
     // On: >950, Off: <700
     if (lightValue > 950 && Relay1 == HIGH) {
-        // Relay 1 Off
         Relay1 = LOW;
         digitalWrite(pinRelay1, Relay1);
         digitalWrite(pinLedG, HIGH);
+        Serial.println("[INFO] Relay 1 Off");
     } else if (lightValue < 700 && Relay1 == LOW) {
-        // Relay 1 On
         Relay1 = HIGH;
         digitalWrite(pinRelay1, Relay1);
         digitalWrite(pinLedG, LOW);
+        Serial.println("[INFO] Relay 1 On");
     }
 
     // Send get-temperatures command
@@ -97,10 +100,12 @@ void loop()
         Relay2 = LOW;
         digitalWrite(pinRelay2, Relay2);
         digitalWrite(pinLedR, HIGH);
+        Serial.println("[INFO] Relay 2 Off");
     } else if (temperature < 30.0 && Relay2 == LOW) {
         Relay2 = HIGH;
         digitalWrite(pinRelay2, Relay2);
         digitalWrite(pinLedR, LOW);
+        Serial.println("[INFO] Relay 2 On");
     }
 
     // Write sensor data to serial port
