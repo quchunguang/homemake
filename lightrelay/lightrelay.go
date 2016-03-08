@@ -17,26 +17,35 @@ type record map[string]string
 
 const (
 	BAUD       = 9600
-	STORECOUNT = 2000
+	STORECOUNT = 500
 	CONNRETRY  = 3
 	DATACOUNT  = 9
 	UPLOADURL  = "https://api.myjson.com/bins/3wczx"
 	DATAFILE   = "lightrelay.tsv"
+	LOGFILE    = "lightrelay.log"
 )
 
 var Headers = []string{"temp", "light"}
 
 func getData(reader *bufio.Reader, records *[]record) error {
-	f, err := os.OpenFile(DATAFILE, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	defer f.Close()
+	tsvfile, err := os.OpenFile(DATAFILE,
+		os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	defer tsvfile.Close()
 	if err != nil {
 		fmt.Println("[ERROR] Can not open data file for append", DATAFILE)
-		os.Exit(1)
+		os.Exit(2)
+	}
+
+	logfile, err := os.OpenFile(LOGFILE,
+		os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	defer logfile.Close()
+	if err != nil {
+		fmt.Println("[ERROR] Can not open log file for append", LOGFILE)
+		os.Exit(3)
 	}
 
 	for i := 0; i < DATACOUNT; i++ {
 		reply, err := reader.ReadBytes('\x0a')
-		fmt.Print(".")
 		if err != nil {
 			return err
 		}
@@ -45,12 +54,19 @@ func getData(reader *bufio.Reader, records *[]record) error {
 		record["time"] = time.Now().Format("2006-01-02T15:04:05Z")
 		s := record["time"]
 		line := strings.TrimSpace(string(reply))
+		if strings.HasPrefix(line, "[") {
+			fmt.Print("i")
+			s += " " + line
+			logfile.Write([]byte(s))
+			continue
+		}
+		fmt.Print(".")
 		for j, v := range strings.Split(line, " ") {
 			record[Headers[j]] = v
 			s += "\t" + v
 		}
 		s += "\n"
-		f.Write([]byte(s))
+		tsvfile.Write([]byte(s))
 		*records = append(*records, record)
 	}
 	return nil
@@ -83,7 +99,7 @@ func main() {
 	defer s.Close()
 	if err != nil {
 		fmt.Println("[ERROR] Can not connect serial port", DEVICE)
-		os.Exit(2)
+		os.Exit(1)
 	}
 
 	reader := bufio.NewReader(s)
