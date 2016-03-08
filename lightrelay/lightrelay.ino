@@ -69,15 +69,8 @@ void setup()
 
 void loop()
 {
-    // Send the command to get temperatures
-    sensors.requestTemperatures();
-
-    // Get sensor data and write to serial port
-    temperature = sensors.getTempCByIndex(0);
+    // Get light sensor data
     lightValue = analogRead(pinReadLight);
-    Serial.print(temperature);
-    Serial.write(' ');
-    Serial.println(lightValue);
 
     // Control relay-1 with light sensor
     // On: >950, Off: <700
@@ -93,6 +86,11 @@ void loop()
         digitalWrite(pinLedG, LOW);
     }
 
+    // Send get-temperatures command
+    sensors.requestTemperatures();
+    // Get temperature sensor data at device 0
+    temperature = sensors.getTempCByIndex(0);
+
     // Control relay-2 with temperature
     // On: <30.0, Off: >35.0
     if (temperature > 35.0 && Relay2 == HIGH) {
@@ -104,6 +102,11 @@ void loop()
         digitalWrite(pinRelay2, Relay2);
         digitalWrite(pinLedR, LOW);
     }
+
+    // Write sensor data to serial port
+    Serial.print(temperature);
+    Serial.write(' ');
+    Serial.println(lightValue);
 
     delay(1000);
 }

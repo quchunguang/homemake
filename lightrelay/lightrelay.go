@@ -16,14 +16,24 @@ import (
 type record map[string]string
 
 const (
-	STORECOUNT = 500
+	BAUD       = 9600
+	STORECOUNT = 2000
 	CONNRETRY  = 3
 	DATACOUNT  = 9
+	UPLOADURL  = "https://api.myjson.com/bins/3wczx"
+	DATAFILE   = "lightrelay.tsv"
 )
 
 var Headers = []string{"temp", "light"}
 
 func getData(reader *bufio.Reader, records *[]record) error {
+	f, err := os.OpenFile(DATAFILE, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	defer f.Close()
+	if err != nil {
+		fmt.Println("[ERROR] Can not open data file for append", DATAFILE)
+		os.Exit(1)
+	}
+
 	for i := 0; i < DATACOUNT; i++ {
 		reply, err := reader.ReadBytes('\x0a')
 		fmt.Print(".")
@@ -33,20 +43,21 @@ func getData(reader *bufio.Reader, records *[]record) error {
 
 		var record = record{}
 		record["time"] = time.Now().Format("2006-01-02T15:04:05Z")
-
+		s := record["time"]
 		line := strings.TrimSpace(string(reply))
 		for j, v := range strings.Split(line, " ") {
 			record[Headers[j]] = v
+			s += "\t" + v
 		}
+		s += "\n"
+		f.Write([]byte(s))
 		*records = append(*records, record)
 	}
 	return nil
 }
 
 func upload(jsonstr []byte) error {
-	url := "https://api.myjson.com/bins/3wczx"
-
-	req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(jsonstr))
+	req, _ := http.NewRequest("PUT", UPLOADURL, bytes.NewBuffer(jsonstr))
 	req.Header.Set("X-Custom-Header", "myvalue")
 	req.Header.Set("Content-Type", "application/json")
 
@@ -67,12 +78,12 @@ func upload(jsonstr []byte) error {
 func main() {
 	var records []record
 
-	c := &serial.Config{Name: DEVICE, Baud: 9600}
+	c := &serial.Config{Name: DEVICE, Baud: BAUD}
 	s, err := serial.OpenPort(c)
 	defer s.Close()
 	if err != nil {
 		fmt.Println("[ERROR] Can not connect serial port", DEVICE)
-		os.Exit(1)
+		os.Exit(2)
 	}
 
 	reader := bufio.NewReader(s)
@@ -86,7 +97,7 @@ func main() {
 		if len(records) > STORECOUNT {
 			records = records[len(records)-STORECOUNT:]
 		}
-		rets, _ := json.MarshalIndent(records, "", "    ")
+		rets, _ := json.Marshal(records)
 
 		now := time.Now().Format("2006-01-02T15:04:05Z")
 		fmt.Print(" ", now, " Uploading")
