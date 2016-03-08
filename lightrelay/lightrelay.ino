@@ -28,16 +28,16 @@
 
 #define BAUDRATE 9600
 
-#define pinLedB 2
-#define pinLedG 3
-#define pinLedR 4
+#define pinLedB 2 // no use for now
+#define pinLedG 3 // oxygen supply
+#define pinLedR 4 // heater
 #define pinRelay1 5
 #define pinRelay2 6
 #define pinDS18B20 7 // one wire bus
 #define pinReadLight A0
 
-int Relay1 = LOW; // ON
-int Relay2 = LOW; // ON
+int Relay1 = LOW; // LOW for ON
+int Relay2 = LOW; // LOW for ON
 int lightValue = 0;
 float temperature = 0.0;
 
@@ -47,7 +47,6 @@ DallasTemperature sensors(&oneWire);
 void setup()
 {
     Serial.begin(BAUDRATE);
-    Serial.println("[INFO] Init");
 
     pinMode(pinLedR, OUTPUT);
     pinMode(pinLedG, OUTPUT);
@@ -55,14 +54,14 @@ void setup()
     pinMode(pinRelay1, OUTPUT);
     pinMode(pinRelay2, OUTPUT);
 
-    digitalWrite(pinLedR, LOW);
-    digitalWrite(pinLedG, LOW);
+    digitalWrite(pinLedR, HIGH);
+    digitalWrite(pinLedG, HIGH);
     digitalWrite(pinLedB, LOW);
 
     digitalWrite(pinRelay1, Relay1);
     digitalWrite(pinRelay2, Relay2);
-    Serial.println("[INFO] Relay 1 On");
-    Serial.println("[INFO] Relay 2 On");
+    Serial.println("[INFO] Init turn on oxygen supply");
+    Serial.println("[INFO] Init turn on heater");
 
     // Start up the library
     sensors.begin();
@@ -99,13 +98,13 @@ void loop()
     if (temperature > 35.0 && Relay2 == LOW) {
         Relay2 = HIGH;
         digitalWrite(pinRelay2, Relay2);
-        digitalWrite(pinLedR, HIGH);
-        Serial.println("[INFO] Temperature above 35 degree, cut off power");
+        digitalWrite(pinLedR, LOW);
+        Serial.println("[INFO] Temperature above 35 degree, cut off heater");
     } else if (temperature < 20.0 && Relay2 == HIGH) {
         Relay2 = LOW;
         digitalWrite(pinRelay2, Relay2);
-        digitalWrite(pinLedR, LOW);
-        Serial.println("[INFO] Temperature below 20 degree, turn on power");
+        digitalWrite(pinLedR, HIGH);
+        Serial.println("[INFO] Temperature below 20 degree, turn on heater");
     }
 
     // Write sensor data to serial port
