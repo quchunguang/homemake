@@ -36,8 +36,8 @@
 #define pinDS18B20 7 // one wire bus
 #define pinReadLight A0
 
-int Relay1 = LOW;
-int Relay2 = LOW;
+int Relay1 = LOW; // ON
+int Relay2 = LOW; // ON
 int lightValue = 0;
 float temperature = 0.0;
 
@@ -61,8 +61,8 @@ void setup()
 
     digitalWrite(pinRelay1, Relay1);
     digitalWrite(pinRelay2, Relay2);
-    Serial.println("[INFO] Relay 1 Off");
-    Serial.println("[INFO] Relay 2 Off");
+    Serial.println("[INFO] Relay 1 On");
+    Serial.println("[INFO] Relay 2 On");
 
     // Start up the library
     sensors.begin();
@@ -77,16 +77,16 @@ void loop()
 
     // Control relay-1 with light sensor
     // On: >950, Off: <700
-    if (lightValue > 950 && Relay1 == HIGH) {
-        Relay1 = LOW;
-        digitalWrite(pinRelay1, Relay1);
-        digitalWrite(pinLedG, HIGH);
-        Serial.println("[INFO] Relay 1 Off");
-    } else if (lightValue < 700 && Relay1 == LOW) {
+    if (lightValue > 950 && Relay1 == LOW) {
         Relay1 = HIGH;
         digitalWrite(pinRelay1, Relay1);
         digitalWrite(pinLedG, LOW);
-        Serial.println("[INFO] Relay 1 On");
+        Serial.println("[INFO] Light above 950, cut off oxygen supply");
+    } else if (lightValue < 700 && Relay1 == HIGH) {
+        Relay1 = LOW;
+        digitalWrite(pinRelay1, Relay1);
+        digitalWrite(pinLedG, HIGH);
+        Serial.println("[INFO] Light below 700, turn on oxygen supply");
     }
 
     // Send get-temperatures command
@@ -96,16 +96,16 @@ void loop()
 
     // Control relay-2 with temperature
     // On: <30.0, Off: >35.0
-    if (temperature > 35.0 && Relay2 == HIGH) {
-        Relay2 = LOW;
-        digitalWrite(pinRelay2, Relay2);
-        digitalWrite(pinLedR, HIGH);
-        Serial.println("[INFO] Relay 2 Off");
-    } else if (temperature < 30.0 && Relay2 == LOW) {
+    if (temperature > 35.0 && Relay2 == LOW) {
         Relay2 = HIGH;
         digitalWrite(pinRelay2, Relay2);
+        digitalWrite(pinLedR, HIGH);
+        Serial.println("[INFO] Temperature above 35 degree, cut off power");
+    } else if (temperature < 20.0 && Relay2 == HIGH) {
+        Relay2 = LOW;
+        digitalWrite(pinRelay2, Relay2);
         digitalWrite(pinLedR, LOW);
-        Serial.println("[INFO] Relay 2 On");
+        Serial.println("[INFO] Temperature below 20 degree, turn on power");
     }
 
     // Write sensor data to serial port
