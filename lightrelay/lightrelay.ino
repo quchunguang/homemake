@@ -31,8 +31,8 @@
 #define pinLedB 2
 #define pinLedG 3
 #define pinLedR 4
-#define pinRelay1 5  // On when daylight >950, Off <700
-#define pinRelay2 6  // On when temperature <30.0, Off >35.0
+#define pinRelay1 5
+#define pinRelay2 6
 #define pinDS18B20 7 // one wire bus
 #define pinReadLight A0
 
@@ -63,22 +63,24 @@ void setup()
 
     // Start up the library
     sensors.begin();
+
+    delay(500);
 }
 
 void loop()
 {
     // Send the command to get temperatures
     sensors.requestTemperatures();
-    // Why "byIndex"?
-    // You can have more than one IC on the same bus.
-    // 0 refers to the first IC on the wire
+
+    // Get sensor data and write to serial port
     temperature = sensors.getTempCByIndex(0);
     lightValue = analogRead(pinReadLight);
-
     Serial.print(temperature);
     Serial.write(' ');
     Serial.println(lightValue);
 
+    // Control relay-1 with light sensor
+    // On: >950, Off: <700
     if (lightValue > 950 && Relay1 == HIGH) {
         // Relay 1 Off
         Relay1 = LOW;
@@ -91,6 +93,8 @@ void loop()
         digitalWrite(pinLedG, LOW);
     }
 
+    // Control relay-2 with temperature
+    // On: <30.0, Off: >35.0
     if (temperature > 35.0 && Relay2 == HIGH) {
         Relay2 = LOW;
         digitalWrite(pinRelay2, Relay2);
