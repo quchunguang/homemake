@@ -56,7 +56,7 @@ func getData(reader *bufio.Reader, records *[]record) error {
 		line := strings.TrimSpace(string(reply))
 		if strings.HasPrefix(line, "[") {
 			fmt.Print("i")
-			s += " " + line
+			s = line + " " + s + "\n"
 			logfile.Write([]byte(s))
 			continue
 		}
