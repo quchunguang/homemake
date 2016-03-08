@@ -15,9 +15,9 @@
 //                                    Gnd->Gnd(Arduino);
 //                                    Data->4.7KOhm->5V(Arduino);
 //                                        |->D7.
-//      LED: Gnd->330Ohm->pinLedL->D2;
-//           Gnd->330Ohm->pinLedM->D3;
-//           Gnd->330Ohm->pinLedH->D4.
+//      LED: Gnd->330Ohm->pinLedB->D2;
+//           Gnd->330Ohm->pinLedG->D3;
+//           Gnd->330Ohm->pinLedR->D4.
 //      Relay module->Arduino: Gnd->Gnd(Arduino); In1->D5; In2->D6; Vcc->5V.
 //      Relay module->Power switcher: NO1->AC PowerA1; NO2->AC PowerA2.
 //      Relay module->Power switcher: COM1->COM2->AC PowerB.
@@ -28,11 +28,11 @@
 
 #define BAUDRATE 9600
 
-#define pinLedL 2
-#define pinLedM 3
-#define pinLedH 4
-#define pinRelay1 5  // HIGH ON
-#define pinRelay2 6  // HIGH OFF
+#define pinLedB 2
+#define pinLedG 3
+#define pinLedR 4
+#define pinRelay1 5  // On when daylight >950, Off <700
+#define pinRelay2 6  // On when temperature <30.0, Off >35.0
 #define pinDS18B20 7 // one wire bus
 #define pinReadLight A0
 
@@ -44,23 +44,20 @@ float temperature = 0.0;
 OneWire oneWire(pinDS18B20);
 DallasTemperature sensors(&oneWire);
 
-void ctrlLed(int l, int m, int h) {
-    digitalWrite(pinLedL, l);
-    digitalWrite(pinLedM, m);
-    digitalWrite(pinLedH, h);
-}
-
 void setup()
 {
     Serial.begin(BAUDRATE);
 
-    pinMode(pinLedL, OUTPUT);
-    pinMode(pinLedM, OUTPUT);
-    pinMode(pinLedH, OUTPUT);
+    pinMode(pinLedR, OUTPUT);
+    pinMode(pinLedG, OUTPUT);
+    pinMode(pinLedB, OUTPUT);
     pinMode(pinRelay1, OUTPUT);
     pinMode(pinRelay2, OUTPUT);
 
-    ctrlLed(LOW, LOW, LOW);
+    digitalWrite(pinLedR, LOW);
+    digitalWrite(pinLedG, LOW);
+    digitalWrite(pinLedB, LOW);
+
     digitalWrite(pinRelay1, Relay1);
     digitalWrite(pinRelay2, Relay2);
 
@@ -82,26 +79,26 @@ void loop()
     Serial.write(' ');
     Serial.println(lightValue);
 
-    if (lightValue > 950) {
-        ctrlLed(HIGH, HIGH, HIGH);
+    if (lightValue > 950 && Relay1 == HIGH) {
+        // Relay 1 Off
+        Relay1 = LOW;
+        digitalWrite(pinRelay1, Relay1);
+        digitalWrite(pinLedG, HIGH);
+    } else if (lightValue < 700 && Relay1 == LOW) {
+        // Relay 1 On
+        Relay1 = HIGH;
+        digitalWrite(pinRelay1, Relay1);
+        digitalWrite(pinLedG, LOW);
+    }
 
-        if (Relay2 == HIGH) {
-            Relay2 = LOW;
-            digitalWrite(pinRelay2, Relay2);
-//            Serial.println("[X] Relay 2 Off");
-        }
-    } else if (lightValue > 800) {
-        ctrlLed(HIGH, HIGH, LOW);
-    } else if (lightValue > 700) {
-        ctrlLed(HIGH, LOW, LOW);
-    } else {
-        ctrlLed(LOW, LOW, LOW);
-
-        if (Relay2 == LOW) {
-            Relay2 = HIGH;
-            digitalWrite(pinRelay2, Relay2);
-//            Serial.println("[X] Relay 2 On");
-        }
+    if (temperature > 35.0 && Relay2 == HIGH) {
+        Relay2 = LOW;
+        digitalWrite(pinRelay2, Relay2);
+        digitalWrite(pinLedR, HIGH);
+    } else if (temperature < 30.0 && Relay2 == LOW) {
+        Relay2 = HIGH;
+        digitalWrite(pinRelay2, Relay2);
+        digitalWrite(pinLedR, LOW);
     }
 
     delay(1000);
