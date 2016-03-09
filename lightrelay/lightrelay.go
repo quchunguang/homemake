@@ -73,7 +73,10 @@ func getData(reader *bufio.Reader, records *[]record) error {
 }
 
 func upload(jsonstr []byte) error {
-	req, _ := http.NewRequest("PUT", UPLOADURL, bytes.NewBuffer(jsonstr))
+	req, err := http.NewRequest("PUT", UPLOADURL, bytes.NewBuffer(jsonstr))
+	if err != nil {
+		return err
+	}
 	req.Header.Set("X-Custom-Header", "myvalue")
 	req.Header.Set("Content-Type", "application/json")
 
@@ -118,8 +121,8 @@ func main() {
 		now := time.Now().Format("2006-01-02T15:04:05Z")
 		fmt.Print(" ", now, " Uploading")
 		for i := 0; i < CONNRETRY; i++ {
-			err := upload(rets)
 			fmt.Print(".")
+			err := upload(rets)
 			if err == nil {
 				fmt.Println("Done")
 				break
