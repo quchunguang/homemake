@@ -76,7 +76,7 @@ void loop()
 
     // Control relay-1 with light sensor
     // On: >950, Off: <700
-    if (lightValue > 950 && Relay1 == LOW) {
+    if (lightValue > 900 && Relay1 == LOW) {
         Relay1 = HIGH;
         digitalWrite(pinRelay1, Relay1);
         digitalWrite(pinLedG, LOW);

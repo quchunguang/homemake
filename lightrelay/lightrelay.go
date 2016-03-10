@@ -82,7 +82,6 @@ func upload(jsonstr []byte) error {
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
-	defer resp.Body.Close()
 	if err != nil {
 		return err
 	}
@@ -90,6 +89,7 @@ func upload(jsonstr []byte) error {
 	if resp.StatusCode != 200 {
 		err = errors.New(resp.Status)
 	}
+	resp.Body.Close()
 
 	return err
 }
