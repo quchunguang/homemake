@@ -25,3 +25,10 @@ _testmain.go
 
 Makefile.bak
 sftp-config.json
+
+*.hex
+*.log
+*.tsv
+
+lightrelay/lightrelay
+.dep
