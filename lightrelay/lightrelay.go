@@ -51,7 +51,7 @@ func getData(reader *bufio.Reader, records *[]record) error {
 		}
 
 		var record = record{}
-		record["time"] = time.Now().Format("2006-01-02T15:04:05Z")
+		record["time"] = time.Now().UTC().Format("2006-01-02T15:04:05.000Z")
 		s := record["time"]
 		line := strings.TrimSpace(string(reply))
 		if strings.HasPrefix(line, "[") {
