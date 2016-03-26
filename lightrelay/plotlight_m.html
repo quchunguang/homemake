@@ -69,7 +69,7 @@
                 return x(d.time);
             })
             .y(function(d) {
-                return y(d.temp);
+                return y(d.light);
             });
 
         var svg = d3.select(reference).append("svg")
@@ -78,19 +78,19 @@
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-        d3.json("https://api.myjson.com/bins/3wczx", function(error, data) {
+        d3.json("https://api.myjson.com/bins/11yle", function(error, data) {
             if (error) throw error;
 
             data.forEach(function(d) {
                 d.time = iso.parse(d.time);
-                d.temp = parseFloat(d.temp);
+                d.light = parseFloat(d.light);
             });
 
             x.domain(d3.extent(data, function(d) {
                 return d.time;
             }));
             y.domain(d3.extent(data, function(d) {
-                return d.temp;
+                return d.light;
             }));
             svg.append("g")
                 .attr("class", "x axis")
@@ -105,7 +105,7 @@
                 .attr("y", 6)
                 .attr("dy", ".71em")
                 .style("text-anchor", "end")
-                .text("Temperature (℃)");
+                .text("Illumination (K*log(Lx))");
 
             svg.append("path")
                 .datum(data)

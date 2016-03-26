@@ -47,7 +47,7 @@
             width = 960 - margin.left - margin.right,
             height = 500 - margin.top - margin.bottom;
 
-        var formatDate = d3.time.format("%Y-%m-%dT%H:%M:%SZ");
+        var iso = d3.time.format.utc("%Y-%m-%dT%H:%M:%S.%LZ");
 
         var x = d3.time.scale()
             .range([0, width]);
@@ -58,7 +58,7 @@
         var xAxis = d3.svg.axis()
             .scale(x)
             .orient("bottom")
-            .tickFormat(d3.time.format("%H:%M:%S"));
+            .tickFormat(d3.time.format("%H:%M"));
 
         var yAxis = d3.svg.axis()
             .scale(y)
@@ -82,7 +82,7 @@
             if (error) throw error;
 
             data.forEach(function(d) {
-                d.time = formatDate.parse(d.time);
+                d.time = iso.parse(d.time);
                 d.light = parseFloat(d.light);
             });
 
