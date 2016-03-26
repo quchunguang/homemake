@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/tarm/serial"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -29,8 +30,8 @@ const (
 
 var Headers = []string{"temp", "light"}
 
-func getData(reader *bufio.Reader, records *[]record) error {
-	fmt.Print("Reading")
+func getData(reader *bufio.Reader, records *[]record) {
+	fmt.Print(time.Now().Format("2006-01-02T15:04:05 "))
 
 	tsvfile, err := os.OpenFile(DATAFILE,
 		os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
@@ -51,7 +52,7 @@ func getData(reader *bufio.Reader, records *[]record) error {
 	for i := 0; i < DATACOUNT; i++ {
 		reply, err := reader.ReadBytes('\x0a')
 		if err != nil {
-			fmt.Print("x")
+			fmt.Print("D")
 			continue
 		}
 
@@ -60,7 +61,7 @@ func getData(reader *bufio.Reader, records *[]record) error {
 		s := record["time"]
 		line := strings.TrimSpace(string(reply))
 		if strings.HasPrefix(line, "[") {
-			s = line + " " + s + "\n"
+			s = s + " " + line + "\n"
 			logfile.Write([]byte(s))
 			fmt.Print("i")
 			continue
@@ -75,18 +76,26 @@ func getData(reader *bufio.Reader, records *[]record) error {
 		*records = append(*records, record)
 		fmt.Print(".")
 	}
+	fmt.Println("")
+}
+
+func downloadList(url string, records *[]record) error {
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	err = json.Unmarshal(body, records)
 	return err
 }
 
 func upload(jsonstr []byte, url string) error {
 	var err error
-	now := time.Now().Format("2006-01-02T15:04:05.000Z")
-	fmt.Print(" ", now, " Uploading")
 
 	for i := 0; i < CONNRETRY; i++ {
 		req, err := http.NewRequest("PUT", url, bytes.NewBuffer(jsonstr))
 		if err != nil {
-			fmt.Print("x")
 			continue
 		}
 		req.Header.Set("X-Custom-Header", "myvalue")
@@ -95,38 +104,41 @@ func upload(jsonstr []byte, url string) error {
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		if err != nil {
-			fmt.Print("x")
 			continue
 		}
 
 		if resp.StatusCode != 200 {
 			err = errors.New(resp.Status)
-			fmt.Print("x")
 			continue
 		}
 		resp.Body.Close()
-		fmt.Print(".")
 		return nil // OK
 	}
 	return err
 }
 
-func uploadlist(records []record, url string) {
+func uploadList(records []record, url string) {
 	if len(records) > STORECOUNT {
 		records = records[len(records)-STORECOUNT:]
 	}
 	jsonstr, _ := json.Marshal(records)
 	err := upload(jsonstr, url)
 	if err != nil {
-		fmt.Println("Fail")
+		fmt.Println("U")
 	} else {
-		fmt.Println("Done")
+		fmt.Print("u")
 	}
 }
 
 func main() {
 	var seconds, minutes, hours []record
 
+	// Initialize reading data from web
+	downloadList(URL_SECOND, &seconds)
+	downloadList(URL_MINUTE, &minutes)
+	downloadList(URL_HOUR, &hours)
+
+	// Initialize serial port for reading
 	c := &serial.Config{Name: DEVICE, Baud: BAUD}
 	s, err := serial.OpenPort(c)
 	defer s.Close()
@@ -137,22 +149,27 @@ func main() {
 
 	reader := bufio.NewReader(s)
 	for i := 0; ; i++ {
-		err = getData(reader, &seconds)
-		if err != nil {
-			fmt.Println("Fail")
-			continue
-		}
+		// Get a batch of data from serial port and add to `second` list
+		getData(reader, &seconds)
 
-		uploadlist(seconds, URL_SECOND)
+		go func() {
+			// Upload every-second-pt data to web
+			// Test: About 16s every for-loop. About 1.7s every data point
+			uploadList(seconds, URL_SECOND)
 
-		if i%60 == 0 {
-			minutes = append(minutes, seconds[len(seconds)-1])
-			uploadlist(minutes, URL_MINUTE)
-		}
+			// Upload every-minute-pt data to web
+			// Test: 4 loops makes a minute
+			if i%4 == 0 {
+				minutes = append(minutes, seconds[len(seconds)-1])
+				uploadList(minutes, URL_MINUTE)
+			}
 
-		if i%3600 == 0 {
-			hours = append(hours, seconds[len(seconds)-1])
-			uploadlist(hours, URL_HOUR)
-		}
+			// Upload every-hour-pt data to web
+			// Test: 4*60 loops makes a hour
+			if i%240 == 0 {
+				hours = append(hours, seconds[len(seconds)-1])
+				uploadList(hours, URL_HOUR)
+			}
+		}()
 	}
 }
