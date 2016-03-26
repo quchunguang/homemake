@@ -60,13 +60,13 @@ void setup()
 
     digitalWrite(pinRelay1, Relay1);
     digitalWrite(pinRelay2, Relay2);
-    Serial.println("[INFO] Init oxygen on");
+    Serial.println("[INFO] Initialize oxygen on");
 
     // Start up the library
     sensors.begin();
 
     delay(500);
-    Serial.println("[INFO] Init heater on");
+    Serial.println("[INFO] Initialize heater on");
 }
 
 void loop()
@@ -80,12 +80,12 @@ void loop()
         Relay1 = HIGH;
         digitalWrite(pinRelay1, Relay1);
         digitalWrite(pinLedG, LOW);
-        Serial.println("[INFO] Light>950 oxygen off");
+        Serial.println("[INFO] Light above 900, cut off oxygen");
     } else if (lightValue < 700 && Relay1 == HIGH) {
         Relay1 = LOW;
         digitalWrite(pinRelay1, Relay1);
         digitalWrite(pinLedG, HIGH);
-        Serial.println("[INFO] Light<700 oxygen on");
+        Serial.println("[INFO] Light below 700, turn on oxygen");
     }
 
     // Send get-temperatures command
@@ -99,12 +99,12 @@ void loop()
         Relay2 = HIGH;
         digitalWrite(pinRelay2, Relay2);
         digitalWrite(pinLedR, LOW);
-        Serial.println("[INFO] Temperature >35 heater off");
+        Serial.println("[INFO] temperature over 35d, cut off heater");
     } else if (temperature < 20.0 && Relay2 == HIGH) {
         Relay2 = LOW;
         digitalWrite(pinRelay2, Relay2);
         digitalWrite(pinLedR, HIGH);
-        Serial.println("[INFO] Temperature <20 heater on");
+        Serial.println("[INFO] temperature over 35d, turn on heater");
     }
 
     // Write sensor data to serial port
