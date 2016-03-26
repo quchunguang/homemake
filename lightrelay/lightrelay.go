@@ -28,11 +28,13 @@ const (
 	LOGFILE    = "lightrelay.log"
 )
 
+// Headers of data fields
 var Headers = []string{"temp", "light"}
 
 func getData(reader *bufio.Reader, records *[]record) {
 	fmt.Print(time.Now().Format("2006-01-02T15:04:05 "))
 
+	// Open tsv file for append data
 	tsvfile, err := os.OpenFile(DATAFILE,
 		os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	defer tsvfile.Close()
@@ -41,6 +43,7 @@ func getData(reader *bufio.Reader, records *[]record) {
 		os.Exit(2)
 	}
 
+	// Open log file for append information from hardware
 	logfile, err := os.OpenFile(LOGFILE,
 		os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	defer logfile.Close()
@@ -49,6 +52,7 @@ func getData(reader *bufio.Reader, records *[]record) {
 		os.Exit(3)
 	}
 
+	// Get DATACOUNT points of data
 	for i := 0; i < DATACOUNT; i++ {
 		reply, err := reader.ReadBytes('\x0a')
 		if err != nil {
@@ -56,10 +60,17 @@ func getData(reader *bufio.Reader, records *[]record) {
 			continue
 		}
 
+		// Add `time` column, with UTC standard time format
 		var record = record{}
 		record["time"] = time.Now().UTC().Format("2006-01-02T15:04:05.000Z")
 		s := record["time"]
 		line := strings.TrimSpace(string(reply))
+
+		// Process log
+		// NOTICE: All log info are start with `[`, otherwise, DATA!!!
+		// like: `[INFO] this is a information`
+		// like: `[WARN] this is a warning`
+		// like: `[ERROR] this is a error`
 		if strings.HasPrefix(line, "[") {
 			s = s + " " + line + "\n"
 			logfile.Write([]byte(s))
@@ -67,6 +78,7 @@ func getData(reader *bufio.Reader, records *[]record) {
 			continue
 		}
 
+		// Process data
 		for j, v := range strings.Split(line, " ") {
 			record[Headers[j]] = v
 			s += "\t" + v
@@ -80,6 +92,7 @@ func getData(reader *bufio.Reader, records *[]record) {
 }
 
 func downloadList(url string, records *[]record) error {
+	// Reference at http://myjson.com/api
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
@@ -94,6 +107,8 @@ func upload(jsonstr []byte, url string) error {
 	var err error
 
 	for i := 0; i < CONNRETRY; i++ {
+		// PUT method to update data entirely
+		// Reference at http://myjson.com/api
 		req, err := http.NewRequest("PUT", url, bytes.NewBuffer(jsonstr))
 		if err != nil {
 			continue
@@ -114,13 +129,16 @@ func upload(jsonstr []byte, url string) error {
 		resp.Body.Close()
 		return nil // OK
 	}
-	return err
+	return err // Retry times out, give up
 }
 
 func uploadList(records []record, url string) {
+	// Keep length of list less than STORECOUNT
 	if len(records) > STORECOUNT {
 		records = records[len(records)-STORECOUNT:]
 	}
+
+	// Convert list to JSON string and upload
 	jsonstr, _ := json.Marshal(records)
 	err := upload(jsonstr, url)
 	if err != nil {
@@ -157,16 +175,16 @@ func main() {
 			// Test: About 16s every for-loop. About 1.7s every data point
 			uploadList(seconds, URL_SECOND)
 
-			// Upload every-minute-pt data to web
-			// Test: 4 loops makes a minute
-			if i%4 == 0 {
+			// Upload 5-minute-pt data to web
+			// Test: 20 loops makes 5 minutes
+			if i%20 == 0 {
 				minutes = append(minutes, seconds[len(seconds)-1])
 				uploadList(minutes, URL_MINUTE)
 			}
 
-			// Upload every-hour-pt data to web
-			// Test: 4*60 loops makes a hour
-			if i%240 == 0 {
+			// Upload 5-hour-pt data to web
+			// Test: 20*60 loops makes 5 hours
+			if i%1200 == 0 {
 				hours = append(hours, seconds[len(seconds)-1])
 				uploadList(hours, URL_HOUR)
 			}
