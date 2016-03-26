@@ -190,7 +190,7 @@ func main() {
 
 			// Upload hour-pt data to web every 10 hours
 			if i%3600 == 0 {
-				uploadList(hours, URL_HOUR, 2000)
+				uploadList(hours, URL_HOUR, 10000)
 			}
 		}()
 	}
