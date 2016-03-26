@@ -18,9 +18,8 @@ type record map[string]string
 
 const (
 	BAUD       = 9600
-	STORECOUNT = 1000
 	CONNRETRY  = 5
-	DATACOUNT  = 9
+	DATACOUNT  = 10
 	URL_SECOND = "https://api.myjson.com/bins/3wczx"
 	URL_MINUTE = "https://api.myjson.com/bins/11yle"
 	URL_HOUR   = "https://api.myjson.com/bins/4xhqq"
@@ -57,6 +56,7 @@ func getData(reader *bufio.Reader, records *[]record) {
 		reply, err := reader.ReadBytes('\x0a')
 		if err != nil {
 			fmt.Print("D")
+			i--
 			continue
 		}
 
@@ -67,19 +67,18 @@ func getData(reader *bufio.Reader, records *[]record) {
 		line := strings.TrimSpace(string(reply))
 
 		// Process log
-		// NOTICE: All log info are start with `[`, otherwise, DATA!!!
-		// like: `[INFO] this is a information`
-		// like: `[WARN] this is a warning`
-		// like: `[ERROR] this is a error`
-		if strings.HasPrefix(line, "[") {
+		// NOTICE: All log info are start with `#`, otherwise, DATA!!!
+		// like: `# this is a information`
+		if strings.HasPrefix(line, "#") {
 			s = s + " " + line + "\n"
 			logfile.Write([]byte(s))
-			fmt.Print("i")
+			fmt.Print("#")
+			i--
 			continue
 		}
 
 		// Process data
-		for j, v := range strings.Split(line, " ") {
+		for j, v := range strings.Split(line, "\t") {
 			record[Headers[j]] = v
 			s += "\t" + v
 		}
@@ -132,10 +131,10 @@ func upload(jsonstr []byte, url string) error {
 	return err // Retry times out, give up
 }
 
-func uploadList(records []record, url string) {
-	// Keep length of list less than STORECOUNT
-	if len(records) > STORECOUNT {
-		records = records[len(records)-STORECOUNT:]
+func uploadList(records []record, url string, maxlen int) {
+	// Keep length of list less than maxlen
+	if len(records) > maxlen {
+		records = records[len(records)-maxlen:]
 	}
 
 	// Convert list to JSON string and upload
@@ -171,22 +170,27 @@ func main() {
 		getData(reader, &seconds)
 
 		go func() {
-			// Upload every-second-pt data to web
-			// Test: About 16s every for-loop. About 1.7s every data point
-			uploadList(seconds, URL_SECOND)
+			// Upload second-pt data to web every 10 seconds
+			uploadList(seconds, URL_SECOND, 500)
 
-			// Upload 5-minute-pt data to web
-			// Test: 20 loops makes 5 minutes
-			if i%20 == 0 {
+			// Insert a data pt every minute, 6 loops
+			if i%6 == 0 {
 				minutes = append(minutes, seconds[len(seconds)-1])
-				uploadList(minutes, URL_MINUTE)
 			}
 
-			// Upload 5-hour-pt data to web
-			// Test: 20*60 loops makes 5 hours
-			if i%1200 == 0 {
+			// Upload minute-pt data to web every 10 minutes
+			if i%60 == 0 {
+				uploadList(minutes, URL_MINUTE, 2000)
+			}
+
+			// Insert a data pt every hour, 6*60 loops
+			if i%360 == 0 {
 				hours = append(hours, seconds[len(seconds)-1])
-				uploadList(hours, URL_HOUR)
+			}
+
+			// Upload hour-pt data to web every 10 hours
+			if i%3600 == 0 {
+				uploadList(hours, URL_HOUR, 2000)
 			}
 		}()
 	}
