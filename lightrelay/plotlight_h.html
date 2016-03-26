@@ -2,7 +2,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="refresh" content="17">
+    <!-- <meta http-equiv="refresh" content="17"> -->
     <style>
     body {
         font: 10px sans-serif;
@@ -58,7 +58,7 @@
         var xAxis = d3.svg.axis()
             .scale(x)
             .orient("bottom")
-            .tickFormat(d3.time.format("%m:%d"));
+            .tickFormat(d3.time.format("%m-%d"));
 
         var yAxis = d3.svg.axis()
             .scale(y)
