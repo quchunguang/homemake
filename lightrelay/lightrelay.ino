@@ -1,6 +1,7 @@
 // Function
 //      Control LEDs and 2-way relay with Light sensor
 // Library
+//      sudo apt-get install arduino-core
 //      cd /usr/share/arduino/libraries/
 //      git clone https://github.com/PaulStoffregen/OneWire
 //      git clone https://github.com/milesburton/Arduino-Temperature-Control-Library DallasTemperature
