@@ -24,7 +24,6 @@ const (
 	URL_MINUTE = "https://api.myjson.com/bins/11yle"
 	URL_HOUR   = "https://api.myjson.com/bins/4xhqq"
 	DATAFILE   = "lightrelay.tsv"
-	LOGFILE    = "lightrelay.log"
 )
 
 // Headers of data fields
@@ -42,15 +41,6 @@ func getData(reader *bufio.Reader, records *[]record) {
 		os.Exit(2)
 	}
 
-	// Open log file for append information from hardware
-	logfile, err := os.OpenFile(LOGFILE,
-		os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	defer logfile.Close()
-	if err != nil {
-		fmt.Println("[ERROR] Can not open log file for append", LOGFILE)
-		os.Exit(3)
-	}
-
 	// Get DATACOUNT points of data
 	for i := 0; i < DATACOUNT; i++ {
 		reply, err := reader.ReadBytes('\x0a')
@@ -65,17 +55,6 @@ func getData(reader *bufio.Reader, records *[]record) {
 		record["time"] = time.Now().UTC().Format("2006-01-02T15:04:05.000Z")
 		s := record["time"]
 		line := strings.TrimSpace(string(reply))
-
-		// Process log
-		// NOTICE: All log info are start with `#`, otherwise, DATA!!!
-		// like: `# this is a information`
-		if strings.HasPrefix(line, "#") {
-			s = s + " " + line + "\n"
-			logfile.Write([]byte(s))
-			fmt.Print("#")
-			i--
-			continue
-		}
 
 		// Process data
 		for j, v := range strings.Split(line, "\t") {
