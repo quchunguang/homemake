@@ -2,8 +2,9 @@ package main
 
 import (
 	"bufio"
-	"github.com/tarm/serial"
 	"log"
+
+	"github.com/tarm/serial"
 )
 
 func main() {
