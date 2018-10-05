@@ -30,6 +30,11 @@ sudo usermod -a -G dialout $USER
 # MUST reboot to enable the change
 sudo reboot
 
+# look at the name of a library
+arduino-cli lib search wifi101
+# install the library by name
+arduino-cli lib install "WiFi101"
+
 # create the project folder, and then edit the source in MyFirstSketch/MyFirstSketch.ino
 arduino-cli sketch new MyFirstSketch
 cd $HOME/Arduino/MyFirstSketch
