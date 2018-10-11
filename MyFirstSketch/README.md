@@ -6,7 +6,7 @@ No need to install the offical Arduino IDE!
 
 ```bash
 # or download latest release
-go get -u github.com/arduino/arduino-cli
+go get -u github.com/arduino/arduino-cli  # add $GOPATH/bin to $PATH at $HOME/.profile
 # root for everything
 mkdir $HOME/Arduino
 
@@ -19,7 +19,7 @@ arduino-cli core search arduino
 arduino-cli core search uno
 # install core
 arduino-cli core install arduino:avr
-# ensure the core has installed successfully 
+# ensure the core has installed successfully
 arduino-cli core list
 # BUG: should shows the detail of board connected
 arduino-cli board list
